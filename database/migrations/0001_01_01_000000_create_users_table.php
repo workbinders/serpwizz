@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -12,11 +13,24 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->id()->autoIncrement();
+            $table->string(User::FIRST_NAME);
+            $table->string(User::LAST_NAME);
+            $table->string(User::EMAIL)->unique()->index();
+            $table->string(User::SLUG)->unique();
+            $table->string(User::PASSWORD);
+            $table->enum(User::ROLE, User::ROLE_ENUM)->default(User::USER);
+            $table->string(User::PROFILE_IMAGE)->nullable();
+            $table->string(User::LANGUAGE)->default(config('serpwizz.lang')['en']);
+            $table->string(User::ACCOUNT_NAME)->unique()->index();
+            $table->string(User::REFERRAL_CODE)->nullable();
+            $table->enum(User::STATUS, User::STATUS_ENUM)->default(User::PENDING)->index();
+            $table->string(User::GOOGLE_USER_ID)->nullable();
+            $table->string(User::LINKEDIN_USER_ID)->nullable();
+            $table->string(User::LAST_LOGIN_IP)->nullable();
+            $table->string(User::LAST_LOGIN_CLIENT)->nullable();
+            $table->timestamp(User::LAST_LOGIN)->nullable();
+            $table->string(User::VERIFICATION_TOKEN, 200)->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
