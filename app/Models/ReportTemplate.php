@@ -34,4 +34,9 @@ class ReportTemplate extends Model
     ];
 
     protected $table = 'report_templates';
+
+    public function user()
+    {
+        return $this->hasOne(User::class, 'user_id', 'id');
+    }
 }

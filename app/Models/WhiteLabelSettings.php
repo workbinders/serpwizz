@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Auth;
 
-class WhiteLabelSettings extends Model
+class whiteLabelSettings extends Model
 {
     const WHITE_LABEL = 'white_label';
     const DOMAIN_NAME = 'domain_name';
@@ -24,4 +26,61 @@ class WhiteLabelSettings extends Model
         'FAVICON_ICON' => self::FAVICON_ICON,
         'USER_ID' => self::USER_ID,
     ];
+    protected function headerBigLogo(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value) {
+                if ($value === null) {
+                    return null;
+                }
+                return filter_var($value, FILTER_VALIDATE_URL) ? $value : asset('storage/' . $value);
+            },
+            set: function (string|UploadedFile|null $value) {
+                if ($value instanceof UploadedFile) {
+                    $user = Auth::user();
+                    return $value->storeAs('images/' . $user->slug, 'header_big_logo', 'public') ?: null;
+                }
+
+                return $value;
+            }
+        );
+    }
+    protected function headerSmallLogo(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value) {
+                if ($value === null) {
+                    return null;
+                }
+                return filter_var($value, FILTER_VALIDATE_URL) ? $value : asset('storage/' . $value);
+            },
+            set: function (string|UploadedFile|null $value) {
+                if ($value instanceof UploadedFile) {
+                    $user = Auth::user();
+                    return $value->storeAs('images/' . $user->slug, 'header_small_Logo.jpg', 'public') ?: null;
+                }
+
+                return $value;
+            }
+        );
+    }
+    protected function faviconIcon(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value) {
+                if ($value === null) {
+                    return null;
+                }
+                return filter_var($value, FILTER_VALIDATE_URL) ? $value : asset('storage/' . $value);
+            },
+            set: function (string|UploadedFile|null $value) {
+                if ($value instanceof UploadedFile) {
+                    $user = Auth::user();
+                    return $value->storeAs('images/' . $user->slug, 'favicon_icon.jpg', 'public') ?: null;
+                }
+
+                return $value;
+            }
+        );
+    }
 }

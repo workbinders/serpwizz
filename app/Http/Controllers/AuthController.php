@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use App\Http\Requests\ForgetPasswordRequest;
 use App\Http\Requests\LoginRequest;
-use App\Http\Requests\ProfileUpdateRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\ResetPasswordRequest;
 use App\Http\Resources\AuthResource;
@@ -12,16 +15,9 @@ use App\Mail\ForgetPasswordMail;
 use App\Mail\UserRegisterMail;
 use App\Models\ForgetPassword;
 use App\Models\User;
-use App\Traits\ApiResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
-
 
 class AuthController extends Controller
 {
-    use ApiResponse;
     public function register(RegisterRequest $request)
     {
         try {
@@ -90,33 +86,9 @@ class AuthController extends Controller
             if ($user) {
                 $tokenDelete =  $request->user()->tokens()->delete(); //token delete
                 if ($tokenDelete) {
-                    $message = __('message.logOut_success');
-                    return $this->sendResponse($message, []);
+                    return $this->sendResponse('', []);
                 }
             }
-        } catch (\Throwable $th) {
-            return $this->sendError($th->getMessage(), $th->getFile(), $th);
-        }
-    }
-
-    public function profileUpdate(ProfileUpdateRequest $request)
-    {
-        try {
-            $user = Auth::user();
-            $input = $request->only('first_name', 'last_name', 'email', 'profile_image');
-            $user->update($input);
-            $user->refresh();
-            if ($request->profile_image) {
-                $request->file('profile_image')->getClientOriginalName();
-                $input['profile_image'] = $request->profile_image->move("image/users/profile_image", $user->slug . ".jpg");
-                $user->update($input);
-                $user->refresh();
-            }
-            $response = [
-                User::SINGLE_NAME => new AuthResource($user),
-            ];
-            $message = __('message.profile_update_success');
-            return $this->sendResponse($message, $response);
         } catch (\Throwable $th) {
             return $this->sendError($th->getMessage(), $th->getFile(), $th);
         }

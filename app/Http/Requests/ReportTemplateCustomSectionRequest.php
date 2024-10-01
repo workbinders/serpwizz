@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class ReportRequest extends FormRequest
+class ReportTemplateCustomSectionRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,12 +22,7 @@ class ReportRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'company_name' => 'required',
-            'company_address' => 'required',
-            'company_website' => 'url',
-            'company_phone' => 'required|min:10',
-            'custom_title_status' => 'boolean',
-            'custom_title' => 'required_if:custom_title_status,1',
+            'position' => 'in:top,bottom',
         ];
     }
 }

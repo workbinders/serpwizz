@@ -22,8 +22,8 @@ class WhiteLabelSettingsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'domain_name' => 'required|url',
-            'audit_report_title' => 'required|url',
+            'domain_name' => 'required',
+            'audit_report_title' => 'required',
             'header_big_logo' => 'image|mimes:jpeg,png,jpg',
             'header_small_logo' => 'image|mimes:jpeg,png,jpg',
             'favicon_icon' => 'image|mimes:gif,png,jpg',

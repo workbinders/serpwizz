@@ -105,4 +105,17 @@ class User extends Authenticatable
         $last_login_client = substr($request->header('user-agent'), 0, 200);
         User::where('id', $user->id)->update(['last_login' => date('Y-m-d H:i:s'), 'last_login_ip' => $last_login_ip, 'last_login_client' => $last_login_client]);
     }
+
+    public function whiteLabelSettings()
+    {
+        return $this->hasOne(whiteLabelSettings::class);
+    }
+    public function report()
+    {
+        return $this->hasOne(ReportTemplate::class);
+    }
+    public function customSection()
+    {
+        return $this->hasMany(ReportTemplateCustomSection::class, 'user_id', 'id');
+    }
 }
