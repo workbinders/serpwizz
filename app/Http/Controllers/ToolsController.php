@@ -5,13 +5,11 @@ namespace App\Http\Controllers;
 
 use DOMXPath;
 use GuzzleHttp\Client;
-use Symfony\Component\DomCrawler\Crawler;
 use Illuminate\Support\Facades\Http;
 use App\Http\Requests\ToolRequest;
 use App\Traits\ApiResponse;
 use App\Traits\Tools;
 use App\Services\whois;
-use DOMDocument;
 
 class ToolsController extends Controller
 {
@@ -22,28 +20,13 @@ class ToolsController extends Controller
     {
         try {
             $website = $request->input('website');
-
             $host = $this->getHost($website);
-            $html = $this->getHTML($website);
-
-            $title = $html->getElementsByTagName('title')->item(0)->textContent;
-
-            $message = "We couldn't find a title tag! 🛠️";
-            if ($title != '') {
-                $titleLength = strlen($title);
-                if ($titleLength > config('serpwizz.title_tag.max_length')) {
-                    $message = "Your title tag looks like it's $titleLength characters - consider making it a little smaller!  🔍.";
-                } else if ($titleLength >= config('serpwizz.title_tag.min_length') && $titleLength <= config('serpwizz.title_tag.max_length')) {
-                    $message = "Your title tag looks like it's working, correct and in place - awesome stuff 😊.";
-                } else if ($titleLength < config('serpwizz.title_tag.min_length')) {
-                    $message = "Your title tag looks like it's only $titleLength characters - consider making it a little longer!  🔍.";
-                }
-            }
+            $data = $this->titleTagChecker($website);
 
             return $this->sendResponse('', [
                 'host' => $host,
-                'title' => $title,
-                'message' => $message,
+                'title' => $data['title'],
+                'message' => $data['message'],
                 'min_length' => config('serpwizz.title_tag.min_length'),
                 'max_length' => config('serpwizz.title_tag.max_length'),
             ]);
@@ -58,25 +41,12 @@ class ToolsController extends Controller
         try {
             $website = $request->input('website');
             $host = $this->getHost($website);
-            $html = $this->getHTML($website);
-            $xpath = new DOMXPath($html);
-            $descriptionNode = $xpath->query('//meta[@name="description"]/@content');
-            $description = $descriptionNode->length > 0 ? $descriptionNode->item(0)->nodeValue : '';
-
-            $message = "We couldn't find a meta description! See our tool tip for advice on why this matters 🛠️.";
-            if ($description != '') {
-                $descriptionLength = strlen($description);
-                if ($descriptionLength >= config('serpwizz.meta_description.min_length') && $descriptionLength <= config('serpwizz.meta_description.min_length')) {
-                    $message = "You have a meta description, and its the perfect length! The search engines bots will be delighted 😊";
-                } else if ($descriptionLength > 0) {
-                    $message = "You've got a meta description, but it's not quite the right length for Google. See our tool tip for advice on why this matters 🔍.";
-                }
-            }
+            $data = $this->metaDescriptionChecker($website);
 
             return $this->sendResponse('', [
                 'host' => $host,
-                'description' => $description,
-                'message' => $message,
+                'description' => $data['description'],
+                'message' => $data['message'],
                 'min_length' => config('serpwizz.meta_description.min_length'),
                 'max_length' => config('serpwizz.meta_description.max_length'),
             ]);
@@ -126,21 +96,11 @@ class ToolsController extends Controller
         try {
             $website = $request->input('website');
             $host = $this->getHost($website);
-            $html = $this->getHTML($website);
-            $headerTags = $this->getAllHeaderTags($html);
-
-            $message = 'You need headers to improve readability and prevent bounce rates! See our tool tip for advice on why this matters 🛠️.';
-            if (count($headerTags) > 0) {
-                $h1headerTags = isset($headerTags['h1']);
-                if ($h1headerTags) {
-                    $message = "Your headers are looking good 😊.</div>";
-                }
-            }
-
+            $data = $this->getAllHeaderTags($website);
             return $this->sendResponse('', [
                 'host' => $host,
-                'headers' => $headerTags,
-                'message' => $message
+                'headers' => $data['headerTags'],
+                'message' => $data['message']
             ]);
         } catch (\Throwable $th) {
             return $this->sendError($th->getMessage(), $th->getFile(), $th);
@@ -698,7 +658,6 @@ class ToolsController extends Controller
 
     protected function getHost($url)
     {
-
         $parserUrl = parse_url($url);
         $host = $parserUrl['host'];
         return $host;

@@ -2,30 +2,36 @@
 
 namespace App\Traits;
 
-use App\Services\HTML2Text;
 use DOMDocument;
+use DOMXPath;
+use App\Models\Report;
+use App\Services\HTML2Text;
 use Illuminate\Support\Facades\Http;
 
 trait Tools
 {
-    protected function getHTML($url)
+    protected function titleTagChecker($website)
     {
-        $document = Http::get($url);
-        $dom = $this->htmlToDom($document);
-        return $dom;
+        $html = $this->getHTML($website);
+
+        $title = $html->getElementsByTagName('title')->item(0)->textContent;
+        $message = "We couldn't find a title tag! 🛠️";
+        if ($title != '') {
+            $titleLength = strlen($title);
+            if ($titleLength > config('serpwizz.title_tag.max_length')) {
+                $message = "Your title tag looks like it's $titleLength characters - consider making it a little smaller!  🔍.";
+            } else if ($titleLength >= config('serpwizz.title_tag.min_length') && $titleLength <= config('serpwizz.title_tag.max_length')) {
+                $message = "Your title tag looks like it's working, correct and in place - awesome stuff 😊.";
+            } else if ($titleLength < config('serpwizz.title_tag.min_length')) {
+                $message = "Your title tag looks like it's only $titleLength characters - consider making it a little longer!  🔍.";
+            }
+        }
+        return ['title' => $title, 'message' => $message];
     }
 
-    protected function htmlToDom($document)
+    protected function getAllHeaderTags($website)
     {
-        libxml_use_internal_errors(true);
-        $dom = new DOMDocument();
-        $dom->loadHTML($document->body());
-        libxml_clear_errors();
-        return $dom;
-    }
-
-    protected function getAllHeaderTags($html)
-    {
+        $html = $this->getHTML($website);
         $xpath = new \DOMXPath($html);
         $headerTags = [];
 
@@ -35,7 +41,16 @@ trait Tools
             $headerText = strip_tags($header->textContent);
             $headerTags[$header->nodeName][] =  trim($headerText);
         }
-        return $headerTags;
+
+        $message = 'You need headers to improve readability and prevent bounce rates! See our tool tip for advice on why this matters 🛠️.';
+        if (count($headerTags) > 0) {
+            $h1headerTags = isset($headerTags['h1']);
+            if ($h1headerTags) {
+                $message = "Your headers are looking good 😊.</div>";
+            }
+        }
+
+        return ['headerTags' => $headerTags, 'message' => $message];
     }
 
     protected function getKeywordDensity($content, $url, $maxKeywords = 15)
@@ -137,6 +152,25 @@ trait Tools
 
         curl_close($curl);
     }
+
+    protected function metaDescriptionChecker($website)
+    {
+        $html = $this->getHTML($website);
+        $xpath = new DOMXPath($html);
+        $descriptionNode = $xpath->query('//meta[@name="description"]/@content');
+        $description = $descriptionNode->length > 0 ? $descriptionNode->item(0)->nodeValue : '';
+        $return['description'] = $description;
+        $return['message'] = "We couldn't find a meta description! See our tool tip for advice on why this matters 🛠️.";
+        if ($description != '') {
+            $descriptionLength = strlen($description);
+            if ($descriptionLength >= config('serpwizz.meta_description.min_length') && $descriptionLength <= config('serpwizz.meta_description.min_length')) {
+                $return['message'] = "You have a meta description, and its the perfect length! The search engines bots will be delighted 😊";
+            } else if ($descriptionLength > 0) {
+                $return['message'] = "You've got a meta description, but it's not quite the right length for Google. See our tool tip for advice on why this matters 🔍.";
+            }
+        }
+    }
+
 
     protected function checkSitemapExistence($domain)
     {
@@ -515,6 +549,22 @@ trait Tools
 
 
     // Helpr functions
+    protected function getHTML($url)
+    {
+        $document = Http::get($url);
+        $dom = $this->htmlToDom($document);
+        return $dom;
+    }
+
+    protected function htmlToDom($document)
+    {
+        libxml_use_internal_errors(true);
+        $dom = new DOMDocument();
+        $dom->loadHTML($document->body());
+        libxml_clear_errors();
+        return $dom;
+    }
+
     function curlExecution($url, $curlOptions = [], $ref_url = "http://www.google.com/", $agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.4951.54 Safari/537.36")
     {
 
@@ -532,8 +582,8 @@ trait Tools
         }
         $response = curl_exec($curl);
         if (curl_errno($curl)) {
+            return ['httpCode' => 0, 'response' => ''];
             $error_msg = curl_error($curl);
-            dd($error_msg);
         }
         $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         curl_close($curl);
@@ -575,5 +625,22 @@ trait Tools
             return true;
         }
         return strtolower($parsedUrl['host']) === strtolower($host);
+    }
+
+    private function checkWebsiteExist($url)
+    {
+        $curlExecution = $this->curlExecution($url, [
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_NOBODY => true,
+        ]);
+
+        return in_array($curlExecution['httpCode'], [200, 301, 302]) ? true : false;
+    }
+
+    private function getHost($url)
+    {
+        $parserUrl = parse_url($url);
+        $host = $parserUrl['host'];
+        return $host;
     }
 }

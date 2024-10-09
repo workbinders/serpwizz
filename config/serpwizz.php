@@ -1,5 +1,6 @@
 <?php
 return [
+    'date_format' => 'd M y',
     'lang' => [
         'en' => 'English',
         'es' => 'Spanish',

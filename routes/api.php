@@ -3,7 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AuthUserController;
+use App\Http\Controllers\LeadsController;
 use App\Http\Controllers\PlanController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReportTemplateController;
 use App\Http\Controllers\ReportTemplateCustomSectionController;
 use App\Http\Controllers\ToolsController;
@@ -26,7 +28,18 @@ Route::prefix('v1')->group(function () {
             'white-label-settings' => WhiteLabelSettingsController::class,
             'report-templates'      => ReportTemplateController::class,
             'custom-sections' => ReportTemplateCustomSectionController::class,
+            'leads' => LeadsController::class,
         ]);
+
+        // Report API
+        Route::controller(ReportController::class)->group(function () {
+            Route::get('seo-data/{lead_id}', 'SEOData');
+            Route::get('usability/{lead_id}', 'usability');
+            Route::get('performance/{lead_id}', 'performance');
+            Route::get('technology/{lead_id}', 'technology');
+            Route::get('socialMedia/{lead_id}', 'socialMedia');
+            Route::get('linkAnalysis/{lead_id}', 'linkAnalysis');
+        });
 
         // Tools API
         Route::prefix('tools')->group(function () {
