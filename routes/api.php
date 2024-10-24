@@ -32,13 +32,16 @@ Route::prefix('v1')->group(function () {
         ]);
 
         // Report API
-        Route::controller(ReportController::class)->group(function () {
-            Route::get('seo-data/{lead_id}', 'SEOData');
-            Route::get('usability/{lead_id}', 'usability');
-            Route::get('performance/{lead_id}', 'performance');
-            Route::get('technology/{lead_id}', 'technology');
-            Route::get('socialMedia/{lead_id}', 'socialMedia');
-            Route::get('linkAnalysis/{lead_id}', 'linkAnalysis');
+        Route::prefix('report')->group(function () {
+            Route::controller(ReportController::class)->group(function () {
+                Route::get('lead/{lead}', 'Lead');
+                Route::get('seo-data/{lead}', 'SEOData');
+                Route::get('usability/{lead}', 'usability');
+                Route::get('performance/{lead}', 'performance');
+                Route::get('technology/{lead}', 'technology');
+                Route::get('socialMedia/{lead}', 'socialMedia');
+                Route::get('linkAnalysis/{lead}', 'linkAnalysis');
+            });
         });
 
         // Tools API

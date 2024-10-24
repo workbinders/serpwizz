@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Http;
 
 trait Tools
 {
-    protected function titleTagChecker($website)
+    protected function titleTagChecker($website, $lead_id = false)
     {
         $html = $this->getHTML($website);
 
@@ -25,6 +25,9 @@ trait Tools
             } else if ($titleLength < config('serpwizz.title_tag.min_length')) {
                 $message = "Your title tag looks like it's only $titleLength characters - consider making it a little longer!  🔍.";
             }
+        }
+        if ($lead_id) {
+            Report::storeData($lead_id, 'title', $title);
         }
         return ['title' => $title, 'message' => $message];
     }

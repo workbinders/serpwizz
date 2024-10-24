@@ -11,10 +11,19 @@ class ReportController extends Controller
 {
     use ApiResponse, Tools;
 
-    public function SEOData($lead_id)
+    public function lead(Lead $lead)
+    {
+        try {
+            return $this->sendResponse("", $lead);
+        } catch (\Throwable $th) {
+            return $this->sendError($th->getMessage(), $th->getFile(), $th);
+        }
+    }
+
+    public function SEOData(Lead $lead)
     {
         $keys = [
-            "title_tas" => "titleTagChecker", // 
+            "title_tag" => "titleTagChecker", // 
             "all_header_tags" => "getAllHeaderTags",
             "keyword_density_consistency" => "getKeywordDensity",
             "ip_address_canonicalization" => "checkIpCanonicalization",
@@ -33,22 +42,21 @@ class ReportController extends Controller
             "domain_details" => "",
         ];
         try {
-            $lead = Lead::where('user_id', request()->user()->id)->where('id', $lead_id)->first();
             if ($lead) {
-                $this->titleTagChecker($lead->website);
+                $this->titleTagChecker($lead->website, $lead->id);
             }
         } catch (\Throwable $th) {
             return $this->sendError($th->getMessage(), $th->getFile(), $th);
         }
     }
 
-    public function usability($lead_id) {}
+    public function usability(Lead $lead) {}
 
-    public function performance($lead_id) {}
+    public function performance(Lead $lead) {}
 
-    public function technology($lead_id) {}
+    public function technology(Lead $lead) {}
 
-    public function socialMedia($lead_id) {}
+    public function socialMedia(Lead $lead) {}
 
-    public function linkAnalysis($lead_id) {}
+    public function linkAnalysis(Lead $lead) {}
 }
